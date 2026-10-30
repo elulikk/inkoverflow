@@ -199,6 +199,10 @@ InkFlow también reconoce y **lee** impresoras HP. No escribe nada en una HP.
 | Tinta | — | LEDM `ConsumableConfigDyn.xml` (estado del sensor de cada tanque y de los cabezales), IPP `marker-levels` |
 | Páginas, escaneos, copias, atascos | — | LEDM `ProductUsageDyn.xml` |
 
+* **Una HP solo USB (Smart Tank 210-220) se lee sola, sin IP**: `hp_usb.py` le hace GET por su
+  interfaz REST de USB (la de HP Smart) y trae tinta por tanque, cabezales, estado, firmware y
+  páginas. Solo lee. Si HP Smart está abierto la interfaz está ocupada: la app lo avisa y muestra
+  modelo y serie de Windows.
 * La IP se escribe en **Inicio › HP por red (IP)** (se recuerda) o se toma sola de la cola de
   Windows de esa HP si es TCP/IP. Sin IP, una HP por USB muestra modelo y serie y la app explica
   cómo leer el resto. Con la IP y sin USB también se lee (HP por Wi-Fi).

@@ -1482,8 +1482,14 @@ class MainWindow(QMainWindow):
         errors = [a for a in self.alerts if a.severity == printer_state.ERROR]
         if errors:
             self._set_banner(f"La impresora informa: {printer_state.alert_line(errors[0])}")
+        elif "USB (REST)" in (info.get("via") or ()):
+            self._set_banner("")
         elif not info.get("host"):
-            self._set_banner(HP_USB_ONLY if not info.get("network_errors") else
+            usb_error = next((e for e in info.get("network_errors") or ()
+                              if e.startswith("USB:")), "")
+            self._set_banner(f"No se pudo leer la tinta por USB ({usb_error[4:].strip()}). "
+                             "Cerrá HP Smart y pulsá Actualizar." if usb_error else
+                             HP_USB_ONLY if not info.get("network_errors") else
                              "La HP no respondió por la red: " + info["network_errors"][0]
                              + ". Revisá la IP y que esté en la misma red.")
         for alert in self.alerts:
@@ -1560,8 +1566,8 @@ class MainWindow(QMainWindow):
 
     def _hp_ink_note(self, inks):
         if not inks:
-            return ("Por USB no se lee la tinta de una HP: escribí su IP en «HP por red» y "
-                    "pulsá Actualizar." if not self.info.get("host") else
+            return ("La HP no informó la tinta por USB: cerrá HP Smart y pulsá Actualizar, o "
+                    "escribí su IP en «HP por red»." if not self.info.get("host") else
                     "La impresora no informó la tinta.")
         if any(ink.level is not None for ink in inks):
             note = "Nivel estimado por la impresora, no medido dentro del tanque."

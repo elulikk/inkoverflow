@@ -26,6 +26,7 @@ import fake_hp  # noqa: E402
 import history  # noqa: E402
 import hp_backend  # noqa: E402
 import hp_models  # noqa: E402
+import hp_usb  # noqa: E402
 import pnp  # noqa: E402
 import prefs  # noqa: E402
 import printer_state as ps  # noqa: E402
@@ -34,6 +35,13 @@ import spooler  # noqa: E402
 from test_detect import WindowCase, unit  # noqa: E402
 
 HP_MODEL = "HP Smart Tank 580-590"
+
+
+def setUpModule():
+    """The tests must not talk to a real HP that happens to be plugged into this PC."""
+    patcher = mock.patch.object(hp_usb, "read_all", side_effect=hp_usb.NoInterface("test"))
+    patcher.start()
+    unittest.addModuleCleanup(patcher.stop)
 
 
 class Names(unittest.TestCase):
@@ -253,6 +261,59 @@ class NetworkReading(unittest.TestCase):
         self.assertEqual(ps.hp_inks(info), [])
         with self.assertRaises(hp_backend.HpError):
             hp_backend.read(None, "")
+
+
+REST = {
+    "identity": {"makeAndModel": {"name": "Smart Tank 210-220 series"}, "serialNumber": "CN1",
+                 "productNumber": "3D4L3A", "firmwareVersion": "FW1"},
+    "status": {"status": "inPowerSave"},
+    "supplies": {"suppliesList": [
+        {"supplyType": "inkCartridge", "supplyColorCode": "CMY", "supplyState": "ok",
+         "selectabilityNumber": "M0H50A"},
+        {"supplyType": "inkTank", "supplyColorCode": "K", "supplyState": "ok",
+         "percentLifeDisplay": 40, "levelState": "ok"},
+        {"supplyType": "inkTank", "supplyColorCode": "C", "supplyState": "ok",
+         "percentLifeDisplay": 5, "levelState": "low"}]},
+    "alerts": {"version": "1.1.0"},
+    "counters": {"printUsage": {"impressions": {"monochrome": 1, "color": 2, "total": 3}}},
+}
+
+
+class UsbRest(unittest.TestCase):
+    def test_a_usb_only_hp_is_read_without_an_ip(self):
+        with mock.patch.object(hp_usb, "read_all", return_value=REST):
+            info = hp_backend.read(fake_hp.usb_unit(), "")
+        self.assertEqual(info["via"], ["USB (Windows)", "USB (REST)"])
+        self.assertEqual(info["host"], "")
+        self.assertTrue(info["ready"])
+        self.assertEqual([(i["key"], i["level"], i["state"]) for i in info["inks"]],
+                         [("K", 40, "ok"), ("C", 5, "low")])
+        self.assertEqual(info["printheads"][0]["key"], "CMY")
+        self.assertEqual(info["usage"]["total"], 3)
+        self.assertEqual(info["firmware_version"], "FW1")
+
+    def test_a_busy_interface_keeps_the_windows_identity_and_says_why(self):
+        busy = hp_usb.UsbRestError("¿HP Smart sigue abierto?")
+        with mock.patch.object(hp_usb, "read_all", side_effect=busy):
+            info = hp_backend.read(fake_hp.usb_unit(), "")
+        self.assertEqual(info["via"], ["USB (Windows)"])
+        self.assertTrue(info["network_errors"][0].startswith("USB:"))
+
+    def test_only_get_is_ever_sent(self):
+        sent = []
+
+        class Fake(hp_usb.Session):
+            def __init__(self):
+                pass
+
+            def get(self, target):
+                sent.append(target)
+                return {}
+
+        Fake().get(hp_usb.PATHS["status"])
+        self.assertEqual(sent, [hp_usb.PATHS["status"]])
+        self.assertFalse(hasattr(hp_usb.Session, "post"))
+        self.assertFalse(hasattr(hp_usb.Session, "patch"))
 
 
 class HpWarnings(unittest.TestCase):

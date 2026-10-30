@@ -31,6 +31,7 @@ import struct
 import xml.etree.ElementTree as ET
 
 import hp_models
+import hp_usb
 
 TIMEOUT = 4.0
 IPP_PATHS = ("/ipp/print", "/ipp/printer", "/ipp")
@@ -365,6 +366,49 @@ def usb_identity(printer):
             "usb_names": list(printer.names), "usb_ports": list(printer.ports)}
 
 
+_REST_LEVEL_STATES = {"ok": "ok", "low": "low", "verylow": "verylow", "veryLow": "verylow",
+                      "empty": "empty", "out": "out", "missing": "missing"}
+
+
+def rest_to_network(data):
+    """The USB REST answers (hp_usb.read_all) in the shape of a LEDM reading, so that
+    build_info treats both the same. Ink tanks have a percentage; the cartridges of a
+    tank printer are its printheads."""
+    identity = data.get("identity") or {}
+    names = identity.get("makeAndModel") or {}
+    config = {"model": names.get("name") or names.get("base") or "",
+              "serial_number": identity.get("serialNumber", ""),
+              "product_number": identity.get("productNumber", ""),
+              "firmware_version": identity.get("firmwareVersion", ""),
+              "firmware_date": identity.get("firmwareDateCode", "")}
+    alerts = []
+    for alert in (data.get("alerts") or {}).get("alerts") or ():
+        alerts.append({"id": str(alert.get("stringId") or alert.get("category") or ""),
+                       "severity": str(alert.get("severity", "")),
+                       "colour": str(alert.get("colorCode") or alert.get("color") or "")})
+    status = {"category": str((data.get("status") or {}).get("status", "")), "alerts": alerts}
+    inks, heads = [], []
+    for supply in (data.get("supplies") or {}).get("suppliesList") or ():
+        key = supply.get("supplyColorCode") or "".join(supply.get("colors") or ())
+        state = supply.get("levelState") or supply.get("supplyState") or ""
+        entry = {"key": key, "label": key, "model": supply.get("selectabilityNumber", ""),
+                 "state": _REST_LEVEL_STATES.get(state, state)}
+        if supply.get("supplyType") == "inkTank":
+            level = supply.get("percentLifeDisplay")
+            entry.update(level=level if isinstance(level, int) and 0 <= level <= 100 else None,
+                         kind="ink")
+            inks.append(entry)
+        else:
+            entry.update(level=None, kind="printhead")
+            heads.append(entry)
+    printed = ((data.get("counters") or {}).get("printUsage") or {}).get("impressions") or {}
+    usage = {"total": printed.get("total"), "mono": printed.get("monochrome"),
+             "color": printed.get("color")}
+    return {"ledm": {"config": config, "status": status,
+                     "consumables": {"inks": inks, "printheads": heads}, "usage": usage},
+            "rest": True}
+
+
 def _merge_inks(ledm_inks, ipp_inks):
     """LEDM first (it has the HP state words); IPP fills in a missing level."""
     if not ledm_inks:
@@ -446,8 +490,10 @@ def build_info(identity=None, network=None, host="", network_errors=(), spooler=
             r.endswith("-error") for r in state["reasons"])
     elif spooler is not None:
         ready = not spooler.get("problem")
-    via = [name for name, ok in (("USB (Windows)", bool(identity)), ("IPP", bool(ipp)),
-                                 ("LEDM", bool(ledm))) if ok]
+    rest = bool(network.get("rest"))
+    via = [name for name, ok in (("USB (Windows)", bool(identity)), ("USB (REST)", rest),
+                                 ("IPP", bool(ipp)), ("LEDM", bool(ledm) and not rest))
+           if ok]
     return {
         "brand": "hp", "model": model, "serial_number": pick("serial_number"),
         "firmware_version": pick("firmware_version"),
@@ -465,9 +511,10 @@ def build_info(identity=None, network=None, host="", network_errors=(), spooler=
     }
 
 
-def read(printer=None, host="", spooler=None, timeout=TIMEOUT):
+def read(printer=None, host="", spooler=None, timeout=TIMEOUT, usb_rest=True):
     """Read an HP: `printer` is the pnp.UsbPrinter Windows sees (or None), `host` its
-    network address ('' when unknown). Only reads. HpError when there is nothing at all."""
+    network address ('' when unknown). Only reads. HpError when there is nothing at all.
+    usb_rest=False skips the USB REST interface (tests, or a machine without WinUSB)."""
     identity = usb_identity(printer) if printer is not None else None
     network, errors = None, []
     if host:
@@ -477,7 +524,17 @@ def read(printer=None, host="", spooler=None, timeout=TIMEOUT):
             if identity is None:
                 raise
             errors = [str(exc)]
+    if network is None and identity is not None and usb_rest:
+        # No network (a USB-only model, or no IP): ask the printer through its USB REST
+        # interface. If that is busy (HP Smart open) the Windows identity still shows.
+        try:
+            network = rest_to_network(hp_usb.read_all())
+        except hp_usb.NoInterface:
+            pass
+        except (hp_usb.UsbRestError, OSError) as exc:
+            errors = [f"USB: {exc}"]
     if identity is None and network is None:
         raise HpError("No hay ninguna HP por USB ni una dirección de red para leerla.")
-    return build_info(identity, network, host if network else "", errors, spooler)
+    return build_info(identity, network, host if network and not network.get("rest") else "",
+                      errors, spooler)
 
