@@ -6,6 +6,6 @@
   "testpage_version": "A",
   "view3d_pinned": false,
   "view3d_2d": false,
-  "view3d_fps30": true,
+  "view3d_fps30": false,
   "dark": false
 }
