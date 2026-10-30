@@ -1,0 +1,26 @@
+{"when": "2026-10-26T11:52:33", "kind": "prueba", "model": "XP-230", "serial": "", "detail": "Página de prueba MAG en EPSON XP-230 Series"}
+{"when": "2026-10-27T11:48:19", "kind": "prueba", "model": "L3250", "serial": "X8JD012921", "detail": "Página de prueba MAG en EPSON L3250 Series"}
+{"when": "2026-10-27T12:08:24", "kind": "limpieza", "model": "L3250", "serial": "X8JD012921", "detail": "CL2 (medio): 4882 -> 5023 puntos (+141), 164 s"}
+{"when": "2026-10-27T12:08:41", "kind": "prueba", "model": "L3250", "serial": "X8JD012921", "detail": "Página de prueba MAG en EPSON L3250 Series"}
+{"when": "2026-10-27T12:15:02", "kind": "prueba", "model": "L3250", "serial": "X8JD012921", "detail": "Página de prueba MAG en EPSON L3250 Series"}
+{"when": "2026-10-27T12:20:12", "kind": "reseteo permanente", "model": "L3150", "serial": "X5E9205615", "detail": "hecho; copia L3150_X5E9205615_20261027_122011.json"}
+{"when": "2026-10-27T12:24:16", "kind": "prueba", "model": "L3150", "serial": "X5E9205615", "detail": "Página de prueba MAG en EPSON L3150 Series (Copiar 3)"}
+{"when": "2026-10-27T12:27:18", "kind": "prueba", "model": "L3150", "serial": "X5E9205615", "detail": "Patrón de color"}
+{"when": "2026-10-27T16:44:33", "kind": "prueba", "model": "L3150", "serial": "X5E9205615", "detail": "Patrón de color"}
+{"when": "2026-10-27T16:58:56", "kind": "prueba", "model": "L3150", "serial": "X5E9205615", "detail": "Página de prueba MAG en EPSON L3150 Series (Copiar 3)"}
+{"when": "2026-10-27T18:52:01", "kind": "reseteo permanente", "model": "L3150", "serial": "X5E9197588", "detail": "hecho; copia L3150_X5E9197588_20261027_185200.json"}
+{"when": "2026-10-27T18:53:37", "kind": "prueba", "model": "L3150", "serial": "X5E9197588", "detail": "Página de prueba MAG en EPSON L3150 Series"}
+{"when": "2026-10-27T19:10:02", "kind": "limpieza fallida", "model": "L3150", "serial": "X5E9197588", "detail": "Power ink flushing: La limpieza no terminó en 720 s. No se restauró nada."}
+{"when": "2026-10-27T19:13:51", "kind": "prueba", "model": "L3150", "serial": "X5E9197588", "detail": "Página de prueba MAG en EPSON L3150 Series"}
+{"when": "2026-10-28T11:04:21", "kind": "prueba", "model": "L3150", "serial": "X5E9197588", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3150 Series"}
+{"when": "2026-10-28T11:42:28", "kind": "prueba", "model": "L3150", "serial": "X5E9197588", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3150 Series"}
+{"when": "2026-10-28T16:39:32", "kind": "prueba", "model": "L3150", "serial": "X5E9197588", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3150 Series"}
+{"when": "2026-10-28T17:34:17", "kind": "prueba", "model": "XP-2100", "serial": "X6D4003878", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON XP-2100 Series"}
+{"when": "2026-10-28T18:52:20", "kind": "limpieza fallida", "model": "XP-2100", "serial": "X6D4003878", "detail": "Limpieza (driver Epson): No se pudo leer el contador: No se pudo leer la EEPROM completa.. No se envió nada."}
+{"when": "2026-10-28T18:53:04", "kind": "prueba", "model": "XP-2100", "serial": "X6D4003878", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON XP-2100 Series"}
+{"when": "2026-10-28T18:55:29", "kind": "reseteo temporal", "model": "XP-2100", "serial": "X6D4003878", "detail": "no confirmado"}
+{"when": "2026-10-29T17:50:07", "kind": "reseteo permanente", "model": "L3250", "serial": "XAH3464937", "detail": "hecho; copia L3250_XAH3464937_20261029_175005.json"}
+{"when": "2026-10-29T17:51:08", "kind": "prueba", "model": "L3250", "serial": "XAH3464937", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3250 Series (Copiar 1)"}
+{"when": "2026-10-29T17:59:04", "kind": "prueba", "model": "L3250", "serial": "XAH3464937", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3250 Series (Copiar 1)"}
+{"when": "2026-10-29T18:13:54", "kind": "prueba", "model": "L3250", "serial": "XAH3464937", "detail": "Expulsar hoja"}
+{"when": "2026-10-29T18:18:01", "kind": "prueba", "model": "L3250", "serial": "XAH3464937", "detail": "Página de prueba MAG (Blanca con acentos) en EPSON L3250 Series (Copiar 1)"}

@@ -1,0 +1,11 @@
+{
+  "geometry": "AdnQywADAAAAAAAA////+AAABP8AAAP/AAAAAgAAAJ0AAAT/AAAD9gAAAAACAAAABQAAAAAAAAAAFwAABP8AAAP/",
+  "page": 3,
+  "eeprom_start": 0,
+  "eeprom_end": 255,
+  "testpage_version": "A",
+  "view3d_pinned": false,
+  "view3d_2d": false,
+  "view3d_fps30": true,
+  "dark": false
+}

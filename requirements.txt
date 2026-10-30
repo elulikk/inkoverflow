@@ -1,0 +1,5 @@
+PySide6>=6.7
+pywin32>=306
+numpy>=2.0  # diagnostic pattern analysis
+# backend (Ircama/epson_print_conf, cloned in backend/): its own requirements
+-r backend/requirements.txt
