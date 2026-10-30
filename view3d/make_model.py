@@ -483,6 +483,84 @@ def build_hp_smart_tank_580():
     hp_pads()
 
 
+# ==== HP Smart Tank 210 / 220 ======================================================
+# Same footprint as the 580 (HP: 434.1 x 360 x 134.5 mm) but a print-only machine: no
+# scanner lid and no display. A dark top cover, a small control strip at the front left
+# (power, cancel, resume, status lights), the tanks and the waste-ink bay as in the 580.
+H2_BODY = 1.205                 # white body; the dark top parts sit on it
+H2_TOP = 1.345
+
+
+def hp210_body():
+    base = box("body", HX0, HX1, HY0, HY1, 0.02, H2_BODY, rv=0.09, re=0.03)
+    sx0, sx1, sz0, sz1 = H_SLOT
+    slot = box("c_slot", sx0, sx1, HY0 - 0.2, HY0 + 0.62, sz0, sz1, rv=0.025)
+    wins = [box_y(f"c_w{i}", c - H_WIN_W / 2, c + H_WIN_W / 2, HY0 - 0.2, HY0 + 0.46,
+                  H_WIN_Z0, H_WIN_Z1, r=0.022) for i, c in enumerate(H_TANKS)]
+    y0, y1, z0, z1 = H_PADWIN
+    padwin = box_x("c_padwin", HX1 - 0.06, HX1 + 0.2, y0, y1, z0, z1, r=0.04)
+    bay = box("c_bay", HX1 - 0.925, HX1 - 0.025, y0 - 0.035, y1 + 0.035, z0 - 0.045, z1 + 0.035)
+    usb = box("c_usb", 0.55, 0.67, HY1 - 0.05, HY1 + 0.1, 0.30, 0.38)
+    power = box("c_pwr", -1.50, -1.32, HY1 - 0.05, HY1 + 0.1, 0.26, 0.40, rv=0.02)
+    cut(base, slot, *wins, padwin, bay, usb, power)
+    finish(base)
+
+    # dark top: the control strip (left) and one flat cover over the mechanism
+    finish(box("panel", HX0 + 0.012, -1.645, HY0 - 0.004, H_REAR - 0.012, H2_BODY - 0.004, 1.30,
+               rv=0.08, re=0.025))
+    finish(box("lid", -1.625, HX1 - 0.012, HY0 - 0.014, H_REAR - 0.012, H2_BODY + 0.006, H2_TOP,
+               rv=0.07, re=0.03))
+    rear = box("rear_cover", HX0 + 0.012, HX1 - 0.012, H_REAR, HY1 - 0.004, H2_BODY - 0.004,
+               1.305, rv=0.08, re=0.025)
+    groove = box("c_groove", -1.45, 1.85, H_REAR + 0.20, H_REAR + 0.225, 1.29, 1.4)
+    cut(rear, groove)
+    finish(rear)
+
+    finish(join("slot_inner",
+                box("a", sx0 + 0.01, sx1 - 0.01, HY0 + 0.58, HY0 + 0.61, sz0 + 0.005, sz1 - 0.005),
+                box("b", 0.56, 0.66, HY1 - 0.06, HY1 - 0.04, 0.31, 0.37),
+                box("c", -1.49, -1.33, HY1 - 0.06, HY1 - 0.04, 0.27, 0.39)))
+    ribs = [box("p", sx0 + 0.01, sx1 - 0.01, HY0 + 0.20, HY0 + 0.24, 0.33, sz1 - 0.004)]
+    n = 13
+    for i in range(n):
+        x = sx0 + 0.12 + i * (sx1 - sx0 - 0.24) / (n - 1)
+        ribs.append(box(f"r{i}", x - 0.012, x + 0.012, HY0 + 0.07, HY0 + 0.21, 0.37,
+                        sz1 - 0.004, re=0.006))
+    finish(join("slot_panel", *ribs))
+    finish(join("tray",
+                box("t1", sx0 + 0.03, sx1 - 0.03, HY0 - 0.03, HY0 + 0.58, sz0, sz0 + 0.035,
+                    rv=0.02, re=0.006),
+                box("t2", sx0 + 0.03, sx1 - 0.03, HY0 - 0.04, HY0 - 0.005, sz0, sz0 + 0.07,
+                    rv=0.012, re=0.008)))
+
+    finish(cylinder("logo", 0.073, 1.10, HY0 - 0.008, HY0 + 0.01, 0.163, seg=64, axis='Y'))
+    finish(box_y("label_plate", 1.40, 2.03, HY0 - 0.005, HY0 + 0.01, 0.15, 0.28, r=0.02))
+    finish(join("tank_tabs", *[box_y(f"g{i}", c - 0.06, c + 0.06, HY0 - 0.004, HY0 + 0.01,
+                                     0.50, 0.61, r=0.015) for i, c in enumerate(H_TANKS)]))
+    finish(join("feet", *[cylinder(f"f{i}", x, y, 0.0, 0.03, 0.09, seg=24)
+                          for i, (x, y) in enumerate([(-1.9, -1.5), (1.9, -1.5),
+                                                      (-1.9, 1.5), (1.9, 1.5)])]))
+
+
+def hp210_control_panel():
+    top = 1.30
+    # no display: power button with its ring, cancel and resume buttons, status lights
+    btns = [box(f"b{i}", x - 0.05, x + 0.05, HY0 + 0.52 - 0.05, HY0 + 0.52 + 0.05,
+                top - 0.01, top + 0.014, rv=0.02, re=0.008)
+            for i, x in enumerate((-2.02, -1.88))]
+    finish(join("buttons", cylinder("p", -1.745, HY0 + 0.40, top - 0.01, top + 0.02, 0.05),
+                *btns))
+    finish(cylinder("power_ring", -1.745, HY0 + 0.40, top - 0.01, top + 0.011, 0.068))
+    finish(box("leds", -2.05, -1.75, HY0 + 0.78, HY0 + 0.80, top - 0.01, top + 0.005))
+
+
+def build_hp_smart_tank_210():
+    hp210_body()
+    hp210_control_panel()
+    hp_tanks()
+    hp_pads()
+
+
 # ==== Epson XP-2100 family (XP-2100 / XP-2101 / XP-2105) =========================
 # Epson lists 375 x 300 x 145 mm (W x D x H, trays closed). All black: a glossy front
 # strip with the buttons and the EPSON logo, the output slot under it, the scanner unit
@@ -669,6 +747,7 @@ def build_epson_xp2100():
 
 
 STYLES = {"epson_l3150": build_epson_l3150, "hp_smart_tank_580": build_hp_smart_tank_580,
+          "hp_smart_tank_210": build_hp_smart_tank_210,
           "epson_xp2100": build_epson_xp2100}
 
 

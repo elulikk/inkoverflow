@@ -52,7 +52,7 @@ Item {
         Loader {
             id: artLoader
             anchors.fill: parent
-            sourceComponent: app.style === "hp_smart_tank_580" ? hpArt
+            sourceComponent: (app.style === "hp_smart_tank_580" || app.style === "hp_smart_tank_210") ? hpArt
                              : app.style === "epson_xp2100" ? xpArt : l3150Art
             // the root puts the camera on the new printer once it is drawn
             onLoaded: Qt.callLater(app.styleReady)
@@ -367,7 +367,9 @@ Item {
 
     // ---- HP Smart Tank 580: white, tanks behind windows at the front left -----------------
     component HpArt: Item {
-        readonly property string defaultTitle: "HP Smart Tank 580"
+        // the 210 is the 580 without the scanner and without the screen
+        readonly property bool noScanner: app.style === "hp_smart_tank_210"
+        readonly property string defaultTitle: noScanner ? "HP Smart Tank 210" : "HP Smart Tank 580"
         readonly property var presets: ({
             "front": [1, 320, 215], "tanks": [1.9, 141, 262],
             "pads": [2.0, 540, 300], "panel": [2.0, 110, 145] })
@@ -383,8 +385,9 @@ Item {
         Platform { shadowX: 44; shadowW: 560 }
         Shell { x: 46; y: 120; width: 548; height: 44; radius: 9; tone: "#33373c" }    // top
         Rectangle { x: 152; y: 112; width: 438; height: 36; radius: 7; color: "#4f545a"
-                    opacity: 1 - 0.72 * app.xray }                                    // scanner lid
-        Rectangle { x: 152; y: 144; width: 438; height: 3; color: "#5c6268"; opacity: 1 - 0.72 * app.xray }
+                    visible: !noScanner; opacity: 1 - 0.72 * app.xray }               // scanner lid
+        Rectangle { x: 152; y: 144; width: 438; height: 3; color: "#5c6268"
+                    visible: !noScanner; opacity: 1 - 0.72 * app.xray }
         Shell { x: 50; y: 158; width: 540; height: 172; radius: 10; tone: "#e9ecef" }  // body
         // control panel with its small screen
         Rectangle {
@@ -392,13 +395,15 @@ Item {
             border.color: parent.panelLit ? app.colors.accent : Qt.rgba(1, 1, 1, 0.08)
             border.width: parent.panelLit ? 1.4 : 1
             Rectangle {
+                visible: !noScanner
                 x: 10; y: 8; width: 44; height: 15; radius: 2
                 color: app.connected ? "#7fd3c0" : "#1d2a28"
                 Text { anchors.centerIn: parent; visible: app.connected
                        text: app.d.busy ? "..." : "Listo"; color: "#0c2b25"
                        font.family: app.colors.family; font.pixelSize: 7; font.weight: Font.DemiBold }
             }
-            Repeater { model: 3; Rectangle { x: 10 + index * 16; y: 28; width: 11; height: 6; radius: 2; color: "#3a3e44" } }
+            Repeater { model: noScanner ? 2 : 3
+                       Rectangle { x: 10 + index * 16; y: noScanner ? 17 : 28; width: 11; height: 6; radius: 2; color: "#3a3e44" } }
             Light { ring: true; x: 66; y: 10; width: 12 }
         }
         // logo
@@ -431,7 +436,7 @@ Item {
         Rectangle {
             x: 430; y: 304; width: 104; height: 16; radius: 3
             color: "#f7f8f9"; border.color: "#c8cdd2"; opacity: 1 - 0.72 * app.xray
-            Text { anchors.centerIn: parent; text: "HP Smart Tank 580"; color: "#4a5056"
+            Text { anchors.centerIn: parent; text: defaultTitle; color: "#4a5056"
                    font.family: app.colors.family; font.pixelSize: 8 }
         }
         Foot { x: 70 }

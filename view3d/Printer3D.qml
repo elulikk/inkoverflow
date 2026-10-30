@@ -34,6 +34,7 @@ Item {
     // printer style: which model is drawn (default the Epson L3150 family)
     readonly property var styleFiles: ({ "epson_l3150": "EpsonL3150.qml",
                                          "hp_smart_tank_580": "HpSmartTank580.qml",
+                                         "hp_smart_tank_210": "HpSmartTank210.qml",
                                          "epson_xp2100": "EpsonXP2100.qml" })
     readonly property string style: styleFiles[d.style] !== undefined ? d.style : "epson_l3150"
     // 2D sprites instead of the 3D scene, and the 30 FPS cap (both remembered by the bridge)

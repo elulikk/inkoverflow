@@ -23,6 +23,7 @@ QML = HERE / "view3d" / "Printer3D.qml"
 # 3D models (data["style"]): view3d/<QML file> with its meshes in view3d/meshes/<style>/.
 # An unknown or missing style draws the Epson.
 STYLES = {"epson_l3150": "EpsonL3150.qml", "hp_smart_tank_580": "HpSmartTank580.qml",
+          "hp_smart_tank_210": "HpSmartTank210.qml",
           "epson_xp2100": "EpsonXP2100.qml"}
 
 # L3150 family: what the tanks show before (or without) a reading

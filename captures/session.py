@@ -13,13 +13,13 @@ LOG, STOP, STATE = HERE / "capture.log", HERE / "capture.stop", HERE / "capture.
 TSHARK = Path(r"C:\Program Files\Wireshark\tshark.exe")
 
 
-def start(name):
+def start(name, devices="4"):
     out = HERE / f"{name}.pcap"
     out.unlink(missing_ok=True)
     LOG.unlink(missing_ok=True)
     STOP.unlink(missing_ok=True)
     args = (f'-NoProfile -ExecutionPolicy Bypass -File "{HERE / "capture.ps1"}" '
-            f'-Out "{out}" -Stop "{STOP}" -Log "{LOG}"')
+            f'-Out "{out}" -Stop "{STOP}" -Log "{LOG}" -Devices {devices}')
     subprocess.run(["powershell", "-NoProfile", "-Command",
                     f"Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList '{args}'"],
                    check=True)
@@ -53,5 +53,5 @@ def stop():
 
 if __name__ == "__main__":
     if sys.argv[1] == "start":
-        sys.exit(0 if start(sys.argv[2]) else 1)
+        sys.exit(0 if start(sys.argv[2], *sys.argv[3:4]) else 1)
     stop()

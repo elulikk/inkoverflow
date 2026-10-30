@@ -209,6 +209,14 @@ InkFlow también reconoce y **lee** impresoras HP. No escribe nada en una HP.
   impresos como hojas de basura («GET /cdm/system/v1/status HTTP/1.1»).
 * Por red solo se usan lecturas: `GET /DevMgmt/*Dyn.xml` y la operación IPP
   Get-Printer-Attributes (las pruebas lo comprueban sobre cada pedido).
+* **Smart Tank 210-220**: se reconoce sola y usa su propio modelo 3D/2D (`hp_smart_tank_210`).
+* **Sonda USB de HP** (`captures/hp_rest_probe.py`, no la usa la app): `GET` por la interfaz REST
+  (MI_02, WinUSB, bulk 0x0a/0x8b) con HP Smart cerrado. HP Smart manda como `Host` la ruta del
+  dispositivo USB (con `localhost` contesta 404). En Git Bash hay que poner `MSYS_NO_PATHCONV=1`,
+  si no `/cdm/...` se convierte en una ruta de Windows. Lee estado, alertas, insumos e identidad.
+  **No hay un comando para mover el carro**: se buscó en las capturas de HP Smart y en el
+  firmware que expone la REST (`/cdm/supply/v1/cartridgeSetup` acepta PATCH, pero no respondió y
+  no se sabe qué hace). El carro de la 210 solo se centra solo ante un error de cabezal.
 
 **Almohadillas y reseteo en HP: deshabilitados.** HP no publica un contador de tinta residual
 (absorbente) para sus impresoras de tanque, ni IPP ni LEDM lo informan, y no hay un reseteo
@@ -292,11 +300,12 @@ conectada (sin estilo, o con uno desconocido, se ve la Epson):
 |---|---|---|---|
 | `epson_l3150` | Epson L3150/L3250 | a la derecha, con visor | atrás, del lado de los tanques, tras una tapa translúcida |
 | `hp_smart_tank_580` | HP Smart Tank 580 | al frente a la izquierda (K, C, M, Y) | en la base, a la derecha, bajo la estación de servicio; se ven por una ventana lateral que no existe en la impresora real |
+| `hp_smart_tank_210` | HP Smart Tank 210-220 (la 580 sin escáner ni pantalla: tapa superior oscura y panel con botón de encendido, dos botones y luces) | igual que la 580 | igual que la 580 |
 | `epson_xp2100` | Epson XP-2100/2101/2105 y XP-2150/2151/2155 (Windows llama a la XP-2101 «XP-2100 Series») | sin tanques: cuatro cartuchos Epson 206 (K, C, M, Y) en el carro, bajo el escáner. La cámara «Cartuchos» levanta el escáner y el carro va al centro, como para cambiarlos; un cartucho al 15 % o menos parpadea, igual que la luz de tinta del panel, y se avisa en la tarjeta de tinta | en la base, a la derecha, bajo la estación de servicio; ventana lateral que no existe en la impresora real |
 
 - `printer3d.py`: puente entre la ventana y la escena (datos y pedidos); `STYLES` lista los estilos.
 - `view3d/Printer3D.qml`: lo común a todos los estilos: piso, luces, cámara, etiquetas y HUD.
-- `view3d/EpsonL3150.qml`, `view3d/HpSmartTank580.qml`, `view3d/EpsonXP2100.qml`: cada impresora (mallas, materiales,
+- `view3d/EpsonL3150.qml`, `view3d/HpSmartTank580.qml`, `view3d/HpSmartTank210.qml`, `view3d/EpsonXP2100.qml`: cada impresora (mallas, materiales,
   textos impresos, presets de cámara y adónde apuntan las etiquetas).
 - `view3d/InkLiquid.qml`, `view3d/PadFelt.qml`, `view3d/Mechanism.qml` y `view3d/shaders/`: tinta, almohadillas y el interior animado, compartidos.
 - `view3d/make_model.py`: genera las mallas (`view3d/meshes/<estilo>/`) con Blender, todos

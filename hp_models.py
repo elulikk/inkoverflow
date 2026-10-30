@@ -21,6 +21,7 @@ EPSON_VENDOR = "VID_04B8"
 STYLE_EPSON = "epson_l3150"           # 3D model of the Epson tank family
 STYLE_EPSON_XP2100 = "epson_xp2100"   # Epson XP-2100 / 2101 / 2105: cartridges 206
 STYLE_HP_SMART_TANK_580 = "hp_smart_tank_580"
+STYLE_HP_SMART_TANK_210 = "hp_smart_tank_210"   # print-only: no scanner, no display
 
 # Epson models drawn as the XP-2100 (same body, four 206 cartridges). Windows names the
 # XP-2101 "EPSON XP-2100 Series", so the backend sees it as XP-2100.
@@ -76,10 +77,18 @@ def is_smart_tank_580_family(model):
     return bool(re.search(r"Smart\s*Tank\s*(5[89]\d)\b", model or "", re.I))
 
 
+def is_smart_tank_210_family(model):
+    """Smart Tank 210-220 series (print only): 210, 211, 212, 213, 215, 216, 220, 221...
+    (the Windows name is 'Smart Tank 210-220 series'; 'Smart Tank 2xx' is the same body)."""
+    return bool(re.search(r"Smart\s*Tank\s*2\d\d\b", model or "", re.I))
+
+
 def style_for(brand, model=""):
     """3D model to draw. Every HP gets the Smart Tank 580, the only HP model there is;
     an Epson XP-2100 family printer gets its own (cartridges), any other Epson the L3150."""
     if brand == "hp":
+        if is_smart_tank_210_family(model):
+            return STYLE_HP_SMART_TANK_210
         return STYLE_HP_SMART_TANK_580
     if _EPSON_XP2100.search(model or ""):
         return STYLE_EPSON_XP2100

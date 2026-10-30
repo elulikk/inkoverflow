@@ -62,6 +62,14 @@ class Names(unittest.TestCase):
         self.assertEqual(hp_models.style_for("hp", HP_MODEL), "hp_smart_tank_580")
         self.assertEqual(hp_models.style_for("epson", "L3150"), "epson_l3150")
 
+    def test_smart_tank_210_gets_the_model_without_scanner(self):
+        for model in ("HP Smart Tank 210-220", "HP Smart Tank 210", "HP Smart Tank 215"):
+            self.assertTrue(hp_models.is_smart_tank_210_family(model), model)
+            self.assertEqual(hp_models.style_for("hp", model), "hp_smart_tank_210", model)
+        for model in (HP_MODEL, "HP Smart Tank 530", "HP Smart Tank 750", ""):
+            self.assertFalse(hp_models.is_smart_tank_210_family(model), model)
+        self.assertEqual(hp_models.style_for("hp", "HP Smart Tank 530"), "hp_smart_tank_580")
+
     def test_xp2100_family_gets_the_cartridge_model(self):
         for model in ("XP-2100", "XP-2101", "XP-2105", "XP-2150", "XP-2155"):
             self.assertEqual(hp_models.style_for("epson", model), "epson_xp2100", model)
