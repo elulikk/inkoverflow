@@ -12,13 +12,24 @@ incluye los 117 modelos del backend más la **XP-231** y la XP-230 (mapeadas, ve
 iniciar.bat
 ```
 
-o `.venv\Scripts\python.exe app.py`. Instalación desde cero:
+o `.venv\Scripts\python.exe app.py`.
+
+## Instalar en otra PC
+
+Hace falta tener **Git** y **Python** instalados. El repositorio es privado: la primera vez,
+`git clone` pide iniciar sesión con la cuenta de GitHub.
 
 ```
+git clone https://github.com/elulikk/inkoverflow.git
+cd inkoverflow
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-git clone --depth 1 https://github.com/Ircama/epson_print_conf.git backend
+.venv\Scripts\pip install -r requirements.txt
 ```
+
+Después se abre con `iniciar.bat`. La carpeta `.venv` (las librerías de Python, unos 765 MB) no
+está en GitHub: los dos últimos comandos la crean. `backend/` ya viene incluido en el
+repositorio, no hay que clonarlo aparte. `InkOverflow.lnk` apunta a la carpeta original; en una
+PC nueva hay que recrear el acceso directo.
 
 ## Qué hace cada página
 
