@@ -1,4 +1,5 @@
-"""Start-up screen: the brand's cup filling with ink while the model database loads.
+"""Start-up screen: the brand's cup, as wide as the window, filling with CMYK ink while the
+model database loads. All the text lives inside the cup, on top of the ink.
 
 The level creeps towards 85 % on its own; finish() fills it to the brim, lets one drop
 overflow and then closes the splash and runs the callback (showing the main window).
@@ -7,27 +8,27 @@ import math
 import random
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QLinearGradient, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QFont, QFontMetricsF, QGuiApplication, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 OUTLINE = QColor("#1b2028")
-INK_TOP = QColor("#5fe3d5")
-INK_BOTTOM = QColor("#2aa9c4")
 TEAL = QColor("#11869a")
+CMYK = (QColor("#00a0e0"), QColor("#e0007a"), QColor("#f2c800"), QColor("#1f2328"))
 
 
 class InkSplash(QWidget):
     W, H = 500, 300
-    CUP = QRectF(48, 70, 132, 168)   # inside of the cup
+    CUP = QRectF(30, 52, 440, 214)   # inside of the cup (the whole window)
 
     def __init__(self, app_name, tagline="El contador miente. Nosotros llevamos la cuenta."):
         super().__init__(None, Qt.SplashScreen | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.app_name, self.tagline = app_name, tagline
         self.setFixedSize(self.W, self.H)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.level, self.phase = 0.0, 0.0
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.level, self.phase = 0.2, 0.0
         self.message = "Iniciando..."
-        self.drops = []            # [x, y, speed] of drops falling into the cup
+        self.drops = []            # [x, y, speed, colour] of drops falling into the cup
         self.spill = None          # y of the drop running down the outside once full
         self._done = None          # callback once full; None while still loading
         self._hold = 0             # ticks spent full before closing
@@ -57,8 +58,8 @@ class InkSplash(QWidget):
         elif self.level < 1.0:
             self.level = min(1.0, self.level + max(0.012, (1.0 - self.level) * 0.09))
         if self.level < 0.995 and random.random() < 0.22:
-            self.drops.append([self.CUP.center().x() + random.uniform(-10, 10), 6.0,
-                               random.uniform(3.5, 5.5)])
+            self.drops.append([random.uniform(self.CUP.left() + 20, self.CUP.right() - 20), 6.0,
+                               random.uniform(3.5, 5.5), random.randrange(4)])
         surface = self._surface_y()
         for drop in self.drops:
             drop[1] += drop[2]
@@ -97,13 +98,6 @@ class InkSplash(QWidget):
     def paintEvent(self, _):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        # window: white with a classic thin frame and a teal title strip
-        p.fillRect(self.rect(), QColor("#ffffff"))
-        p.fillRect(QRectF(0, 0, self.W, 4), TEAL)
-        p.setPen(QPen(QColor("#8d96a1"), 1))
-        p.setBrush(Qt.NoBrush)
-        p.drawRect(QRectF(0.5, 0.5, self.W - 1, self.H - 1))
-
         cup = self._cup_path()
         c = self.CUP
         # glass and ink
@@ -122,17 +116,24 @@ class InkSplash(QWidget):
             x += 2
         wave.lineTo(c.right() + 2, c.bottom() + 2)
         wave.closeSubpath()
-        grad = QLinearGradient(0, c.top(), 0, c.bottom())
-        grad.setColorAt(0, INK_TOP)
-        grad.setColorAt(1, INK_BOTTOM)
+        ink = wave.intersected(cup)
         p.save()
         p.setClipPath(cup)
-        p.setBrush(grad)
-        p.drawPath(wave.intersected(cup))
+        band = c.width() / 4
+        for i, color in enumerate(CMYK):   # four vertical bands: C M Y K
+            p.save()
+            p.setClipRect(QRectF(c.left() + i * band, 0, band + (1 if i < 3 else 8), self.H),
+                          Qt.IntersectClip)
+            grad = QLinearGradient(0, c.top(), 0, c.bottom())
+            grad.setColorAt(0, color.lighter(118))
+            grad.setColorAt(1, color)
+            p.setBrush(grad)
+            p.drawPath(ink)
+            p.restore()
         # a few bubbles rising in the ink
         p.setBrush(QColor(255, 255, 255, 90))
-        for i in range(5):
-            bx = c.left() + 18 + i * 24
+        for i in range(9):
+            bx = c.left() + 26 + i * 50
             by = c.bottom() - ((self.phase * 9 + i * 37) % max(1.0, c.bottom() - surface))
             if by > surface + 6:
                 p.drawEllipse(QPointF(bx + 3 * math.sin(self.phase + i), by), 2.2, 2.2)
@@ -142,13 +143,12 @@ class InkSplash(QWidget):
         p.setFont(QFont("Segoe UI", 7))
         for pct in (25, 50, 75):
             y = c.bottom() - c.height() * pct / 100
-            p.setPen(QPen(QColor(27, 32, 40, 150), 1.2))
-            p.drawLine(QPointF(c.left() + 4, y), QPointF(c.left() + 16, y))
-            p.drawText(QPointF(c.left() + 19, y + 3), f"{pct}")
+            p.setPen(QPen(QColor(255, 255, 255, 200) if y > surface else QColor(27, 32, 40, 150), 1.2))
+            p.drawLine(QPointF(c.left() + 4, y), QPointF(c.left() + 14, y))
 
-        # cup outline, as in the logo
-        pen = QPen(OUTLINE, 9, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-        p.setPen(pen)
+        # cup outline, as in the logo (white halo so it reads on any desktop)
+        pen = QPen(QColor("#ffffff"), 15, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        halo_pen, pen = pen, QPen(OUTLINE, 9, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         p.setBrush(Qt.NoBrush)
         r = 26.0
         outline = QPainterPath()
@@ -158,47 +158,53 @@ class InkSplash(QWidget):
         outline.lineTo(c.right() - r, c.bottom() + 4.5)
         outline.quadTo(c.right() + 4.5, c.bottom() + 4.5, c.right() + 4.5, c.bottom() - r)
         outline.lineTo(c.right() + 4.5, c.top() - 18)
+        p.setPen(halo_pen)
+        p.drawPath(outline)
+        p.setPen(pen)
         p.drawPath(outline)
 
         # drops falling in
         p.setPen(Qt.NoPen)
-        p.setBrush(INK_BOTTOM)
-        for x, y, _speed in self.drops:
+        for x, y, _speed, ci in self.drops:
+            p.setBrush(CMYK[ci])
             self._drop(p, x, y, 4.2)
         # overflow: one drop running down the outside of the right wall
         if self.spill is not None:
-            p.setBrush(INK_TOP)
+            p.setBrush(CMYK[3])
             sx = c.right() + 11
             if self.spill < c.bottom():
                 trail = QRectF(sx - 2.2, c.top() - 18, 4.4, self.spill - c.top() + 18)
                 p.drawRoundedRect(trail, 2.2, 2.2)
-            self._drop(p, sx, min(self.spill, c.bottom() + 30), 5.5)
+            self._drop(p, sx, min(self.spill, c.bottom() + 24), 5.5)
 
-        # text
-        tx = 230
-        p.setPen(OUTLINE)
-        p.setFont(QFont("Segoe UI", 26, QFont.Bold))
-        ink_w = p.fontMetrics().horizontalAdvance("Ink")
+        # text: everything sits inside the cup; a white halo keeps it legible on every colour
+        tx = c.left() + 36
         name = self.app_name
+        name_font = QFont("Segoe UI", 26, QFont.Bold)
         if name.startswith("Ink"):
-            p.drawText(QPointF(tx, 118), "Ink")
-            p.setPen(TEAL)
-            p.drawText(QPointF(tx + ink_w, 118), name[3:])
+            ink_w = QFontMetricsF(name_font).horizontalAdvance("Ink")
+            self._text(p, tx, 128, "Ink", name_font, OUTLINE)
+            self._text(p, tx + ink_w, 128, name[3:], name_font, TEAL.darker(130))
         else:
-            p.drawText(QPointF(tx, 118), name)
-        p.setPen(QColor("#5f6670"))
-        p.setFont(QFont("Segoe UI", 9))
-        p.drawText(QRectF(tx, 128, self.W - tx - 20, 40), Qt.TextWordWrap, self.tagline)
+            self._text(p, tx, 128, name, name_font, OUTLINE)
+        self._text(p, tx, 156, self.tagline, QFont("Segoe UI", 10), QColor("#10151c"))
+        self._text(p, tx, 206, self.message, QFont("Segoe UI", 10), QColor("#10151c"))
+        self._text(p, tx, 240, f"{min(self.level, 1.0) * 100:.0f} %",
+                   QFont("Segoe UI", 18, QFont.DemiBold), OUTLINE)
+        small = QFont("Segoe UI", 9)
+        self._text(p, c.right() - 28 - QFontMetricsF(small).horizontalAdvance("MAG Tecnología"),
+                   240, "MAG Tecnología", small, QColor("#10151c"))
 
-        p.setPen(QColor("#1b1f24"))
-        p.setFont(QFont("Segoe UI", 9))
-        p.drawText(QPointF(tx, 206), self.message)
-        p.setPen(TEAL)
-        p.setFont(QFont("Segoe UI", 18, QFont.DemiBold))
-        p.drawText(QPointF(tx, 236), f"{min(self.level, 1.0) * 100:.0f} %")
-        p.setPen(QColor("#8d96a1"))
-        p.setFont(QFont("Segoe UI", 8))
-        p.drawText(QPointF(tx, self.H - 18), "MAG Tecnología")
+    @staticmethod
+    def _text(p, x, y, text, font, color):
+        path = QPainterPath()
+        path.addText(x, y, font, text)
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(QColor(255, 255, 255, 235), 4.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        p.drawPath(path)
+        p.setPen(Qt.NoPen)
+        p.setBrush(color)
+        p.drawPath(path)
 
     @staticmethod
     def _drop(p, x, y, size):

@@ -2,7 +2,7 @@
 
 Regenerate everything with:   .venv\\Scripts\\python.exe brand\\make_brand.py
 
-The mark is a cup (the waste-ink pad) whose ink domes over the rim and runs down the
+The mark is a cup (the waste-ink pad) whose four-colour (CMYK) ink domes over the rim and runs down the
 outside: overflow. Text is converted to outlines with Qt, so the SVGs do not depend on
 any installed font. Colours come from the application's own palette (widgets.C).
 """
@@ -20,9 +20,9 @@ HERE = Path(__file__).resolve().parent
 NAME = "InkOverflow"
 TAGLINE = "El contador miente. Nosotros llevamos la cuenta."
 
-INK_TOP, INK_BOTTOM = "#5fe3d5", "#2aa9c4"
-DARK = {"cup": "#e6e9ef", "word": "#e6e9ef", "flow": "#3dd6c6", "muted": "#8b93a1"}
-LIGHT = {"cup": "#17202b", "word": "#17202b", "flow": "#0e93a8", "muted": "#5b6270"}
+CYAN, MAGENTA, YELLOW = "#00a0e0", "#e0007a", "#f2c800"
+DARK = {"cup": "#e6e9ef", "word": "#e6e9ef", "flow": "#3dd6c6", "muted": "#8b93a1", "k": "#5b6472"}
+LIGHT = {"cup": "#17202b", "word": "#17202b", "flow": "#0e93a8", "muted": "#5b6270", "k": "#1f2328"}
 ICON_SIZES = (16, 24, 32, 48, 64, 128, 256, 512)
 ICO_SIZES = (16, 24, 32, 48, 64, 128, 256)
 
@@ -31,41 +31,47 @@ MARK_BOX = (133, 172, 416, 420)
 
 
 # -- the mark -------------------------------------------------------------------------
-def mark_group(cup: str, defs: bool = True) -> str:
-    """Cup, ink dome above the rim, a stream over the wall and the falling drop."""
-    gradient = (f'<defs><linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="0" y1="170" '
-                f'x2="0" y2="420"><stop offset="0" stop-color="{INK_TOP}"/>'
-                f'<stop offset="1" stop-color="{INK_BOTTOM}"/></linearGradient></defs>') if defs else ""
+def mark_group(cup: str, defs: bool = True, k: str = "#1f2328", halo: str = "") -> str:
+    """Cup, four-colour ink dome above the rim (C M Y K), a stream over the wall and the drop."""
+    shape = "M159 240C159 150 353 150 353 240V348A31 31 0 0 1 322 379H190A31 31 0 0 1 159 348Z"
+    stops = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in (
+        (0, CYAN), (0.25, CYAN), (0.25, MAGENTA), (0.5, MAGENTA),
+        (0.5, YELLOW), (0.75, YELLOW), (0.75, k), (1, k)))
+    head = (f'<defs><linearGradient id="cmyk" gradientUnits="userSpaceOnUse" x1="159" y1="0" '
+            f'x2="353" y2="0">{stops}</linearGradient></defs>') if defs else ""
+    outline = "M146 214V348A44 44 0 0 0 190 392H322A44 44 0 0 0 366 348V214"
+    stream = "M340 238C382 224 392 246 392 282V336"
+    drop = "M392 364C392 364 372 388 372 400A20 20 0 0 0 412 400C412 388 392 364 392 364Z"
+    ring = (f'<path d="{outline}" fill="none" stroke="{halo}" stroke-width="40" stroke-linecap="round" '
+            f'stroke-linejoin="round"/><path d="{stream}" fill="none" stroke="{halo}" stroke-width="38" '
+            f'stroke-linecap="round"/><path d="{drop}" fill="{halo}" stroke="{halo}" stroke-width="14" '
+            f'stroke-linejoin="round"/>') if halo else ""
     return (
-        gradient +
-        '<path d="M159 240C159 150 353 150 353 240V348A31 31 0 0 1 322 379H190'
-        'A31 31 0 0 1 159 348Z" fill="url(#ink)"/>'
+        head + ring +
+        f'<path d="{shape}" fill="url(#cmyk)"/>'
         f'<path d="M146 214V348A44 44 0 0 0 190 392H322A44 44 0 0 0 366 348V214" fill="none" '
         f'stroke="{cup}" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<path d="M340 238C382 224 392 246 392 282V336" fill="none" stroke="url(#ink)" '
+        f'<path d="M340 238C382 224 392 246 392 282V336" fill="none" stroke="{k}" '
         'stroke-width="24" stroke-linecap="round"/>'
         '<path d="M392 364C392 364 372 388 372 400A20 20 0 0 0 412 400C412 388 392 364 392 364Z" '
-        'fill="url(#ink)"/>')
+        f'fill="{k}"/>')
 
 
 def icon_svg() -> str:
-    """App icon: the mark on a dark rounded tile."""
+    """App icon: the four-colour mark on a transparent background, with a white halo so it
+    reads on dark and light taskbars alike."""
     cx, cy = (MARK_BOX[0] + MARK_BOX[2]) / 2, (MARK_BOX[1] + MARK_BOX[3]) / 2
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">'
-        '<defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" '
-        'stop-color="#1d2531"/><stop offset="1" stop-color="#0f1217"/></linearGradient></defs>'
-        '<rect x="8" y="8" width="496" height="496" rx="112" fill="url(#tile)" '
-        'stroke="#2a3340" stroke-width="4"/>'
-        f'<g transform="translate(256 256) scale(1.18) translate({-cx} {-cy})">'
-        f'{mark_group(DARK["cup"])}</g></svg>')
+        f'<g transform="translate(256 256) scale(1.3) translate({-cx} {-cy})">'
+        f'{mark_group(LIGHT["cup"], k=LIGHT["k"], halo="#ffffff")}</g></svg>')
 
 
 def mark_svg(theme: Dict[str, str]) -> str:
     x, y, r, b = MARK_BOX
     pad = 16
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x - pad} {y - pad} '
-            f'{r - x + 2 * pad} {b - y + 2 * pad}">{mark_group(theme["cup"])}</svg>')
+            f'{r - x + 2 * pad} {b - y + 2 * pad}">{mark_group(theme["cup"], k=theme["k"])}</svg>')
 
 
 # -- text as outlines -------------------------------------------------------------------
@@ -119,7 +125,7 @@ def logo_block(theme: Dict[str, str], mark_h: float = 170, defs: bool = True):
     ty = mark_h / 2 - (bounds.top() + bounds.bottom()) / 2
     fragment = (
         f'<g transform="translate({-MARK_BOX[0] * scale:.2f} {-MARK_BOX[1] * scale:.2f}) '
-        f'scale({scale:.4f})">{mark_group(theme["cup"], defs)}</g>'
+        f'scale({scale:.4f})">{mark_group(theme["cup"], defs, theme["k"])}</g>'
         f'<path d="{svg_path(ink, tx, ty)}" fill="{theme["word"]}"/>'
         f'<path d="{svg_path(flow, tx, ty)}" fill="{theme["flow"]}"/>')
     return fragment, tx + bounds.right(), mark_h
@@ -139,7 +145,7 @@ def banner_svg() -> str:
     tag_font = ui_font(30, QFont.Weight.Normal)
     tag = text_path(TAGLINE, tag_font)
     x0 = 96
-    watermark = mark_group(DARK["cup"], defs=False)
+    watermark = mark_group(DARK["cup"], defs=False, k=DARK["k"])
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
         f'width="{width}" height="{height}">'
