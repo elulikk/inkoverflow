@@ -11,6 +11,7 @@ import ctypes
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -41,6 +42,7 @@ import printer3d
 import printer_state
 import report
 import scanner
+import shortcut
 import spooler
 from splash import InkSplash
 import testpage
@@ -440,6 +442,7 @@ class MainWindow(QMainWindow):
             ("folder_report", "Abrir la carpeta de informes", lambda: self._open_folder(report.REPORTS)),
             ("folder_backup", "Abrir la carpeta de copias", lambda: self._open_folder(BACKUP_DIR)),
             ("csv", "Exportar el historial (CSV)...", lambda: self.export_history()),
+            ("folder_report", "Crear acceso directo en el Escritorio", self._make_shortcut),
             None,
             ("info", f"Acerca de {APP_NAME}", self._about),
             ("exit", "Salir", self.close),
@@ -456,6 +459,14 @@ class MainWindow(QMainWindow):
                 self.act_dark.setChecked(is_dark())
                 self.act_dark.toggled.connect(self._set_dark)
         return menu
+
+    def _make_shortcut(self):
+        try:
+            link = shortcut.create()
+        except (OSError, subprocess.SubprocessError) as exc:
+            QMessageBox.warning(self, APP_NAME, f"No se pudo crear el acceso directo:\n{exc}")
+            return
+        QMessageBox.information(self, APP_NAME, f"Acceso directo creado en el Escritorio:\n{link}")
 
     def _set_dark(self, on):
         """Switch theme live and redo what was painted with the old colours."""
@@ -2701,17 +2712,24 @@ def main():
     shown_at = time.monotonic()
     win = MainWindow()
 
+    def open_window():
+        win.show()
+
     def ready():
         # Keep the splash long enough to be seen, then fill it up and open the window.
         wait = max(0, int(1800 - (time.monotonic() - shown_at) * 1000))
-        QTimer.singleShot(wait, lambda: splash.finish(win.show))
+        QTimer.singleShot(wait, lambda: splash.finish(open_window))
+        # meanwhile load the 3D view behind the splash, so it is ready when the window opens
+        splash.set_message("Preparando la vista 3D...")
+        app.processEvents()
+        win.page3d.preload()
 
     win.on_booted = ready
 
     def fallback():  # never stay on the splash if loading hangs
         if win.on_booted:
             win.on_booted = None
-            splash.finish(win.show)
+            splash.finish(open_window)
 
     QTimer.singleShot(10_000, fallback)
     sys.exit(app.exec())

@@ -248,6 +248,13 @@ class Printer3DPage(QWidget):
         super().hideEvent(event)
         self._set_active(False)
 
+    def preload(self):
+        """Build the view while the user is on another page (QML + meshes load now, not on
+        the first visit). It stays inactive, so it draws nothing until the page is shown."""
+        if self.view is None and not self.isVisible():
+            self._create()
+            self._set_active(False)
+
     def _set_active(self, on):
         root = self.view.rootObject() if self.view else None
         if root is not None:
