@@ -306,13 +306,41 @@ conectada (sin estilo, o con uno desconocido, se ve la Epson):
 | `hp_smart_tank_580` | HP Smart Tank 580 | al frente a la izquierda (K, C, M, Y) | en la base, a la derecha, bajo la estación de servicio; se ven por una ventana lateral que no existe en la impresora real |
 | `hp_smart_tank_210` | HP Smart Tank 210-220 (la 580 sin escáner ni pantalla: tapa superior oscura y panel con botón de encendido, dos botones y luces) | igual que la 580 | igual que la 580 |
 | `epson_xp2100` | Epson XP-2100/2101/2105 y XP-2150/2151/2155 (Windows llama a la XP-2101 «XP-2100 Series») | sin tanques: cuatro cartuchos Epson 206 (K, C, M, Y) en el carro, bajo el escáner. La cámara «Cartuchos» levanta el escáner y el carro va al centro, como para cambiarlos; un cartucho al 15 % o menos parpadea, igual que la luz de tinta del panel, y se avisa en la tarjeta de tinta | en la base, a la derecha, bajo la estación de servicio; ventana lateral que no existe en la impresora real |
+| `hp_ink_tank_415` | HP Ink Tank 310/315/319 y Wireless 410/415/419 | en una unidad pegada a la derecha, el negro más ancho (K, C, M, Y) | en la base, detrás de la estación de servicio; ventana lateral del cuerpo, detrás de los tanques |
+| `hp_deskjet_2775` | HP DeskJet 2700 (2710, 2720, 2755...) y DeskJet Ink Advantage 2775/2776 | sin tanques: dos cartuchos HP 667 (negro y tricolor) en el carro. La cámara «Cartuchos» baja la tapa frontal y el carro va al centro | en la base, a la derecha; ventana lateral |
+| `canon_g3110` | Canon PIXMA G2110/G3110/G3160/G3410 (sin lectura todavía) | en dos módulos al frente: el negro grande a la izquierda, C, M, Y a la derecha | en la base, a la derecha; ventana lateral |
+| `brother_t420w` | Brother DCP-T220/T420W/T520W/T720DW (sin lectura todavía) | al frente a la derecha, bajo una tapa con el logo (K, C, M, Y) | en la base, a la derecha; ventana lateral |
 
-- `printer3d.py`: puente entre la ventana y la escena (datos y pedidos); `STYLES` lista los estilos.
+Las láser monocromo (`view3d/printers/laser.py`, una escena común `view3d/LaserPrinter.qml`
+que cada familia viste con sus colores, logo y tóner) no tienen tinta ni almohadillas: el HUD
+muestra el **tóner** y oculta las almohadillas. La cámara «Tóner» abre la tapa superior (o
+levanta el escáner) y deja ver el cartucho con su tambor; al imprimir el tambor gira, el
+fusor se pone naranja y la hoja sale arriba con texto. Cada familia tiene la impresora y su
+multifunción (con escáner):
+
+| Estilos | Impresoras | Tóner |
+|---|---|---|
+| `hp_laserjet_m111` / `hp_laserjet_m141` | HP LaserJet M110-M111w / MFP M140-M141w (y cualquier otra LaserJet) | HP 150A |
+| `brother_hl1212w` / `brother_dcp1612w` | Brother HL-1110/1210W/1212W / DCP-1510/1610W/1612W (sin lectura todavía) | TN-1060 |
+| `pantum_p2500w` / `pantum_m6550nw` | Pantum P2500(W) / M6500-M6550(NW) (sin lectura todavía) | PC-210 |
+| `samsung_m2020w` / `samsung_m2070w` | Samsung Xpress M2020(W) / M2070(W) (sin lectura todavía) | MLT-D111S |
+
+- `printer3d.py`: puente entre la ventana y la escena (datos y pedidos); `MODELS` es la única
+  lista de estilos (archivo QML, nombre, marca, tanques o cartuchos): la usan la escena, la
+  vista 2D y el visor.
 - `view3d/Printer3D.qml`: lo común a todos los estilos: piso, luces, cámara, etiquetas y HUD.
-- `view3d/EpsonL3150.qml`, `view3d/HpSmartTank580.qml`, `view3d/HpSmartTank210.qml`, `view3d/EpsonXP2100.qml`: cada impresora (mallas, materiales,
-  textos impresos, presets de cámara y adónde apuntan las etiquetas).
+- Un QML por impresora (`view3d/EpsonL3150.qml`, `view3d/CanonG3110.qml`...): mallas, materiales,
+  textos impresos, presets de cámara y adónde apuntan las etiquetas.
 - `view3d/InkLiquid.qml`, `view3d/PadFelt.qml`, `view3d/Mechanism.qml` y `view3d/shaders/`: tinta, almohadillas y el interior animado, compartidos.
+- `view3d/ShellMaterial.qml` (el plástico que se vuelve transparente), `view3d/Label3D.qml`
+  (textos impresos) y `view3d/BrandLogo.qml` (logos de Epson, HP, Canon, Brother, Pantum y
+  Samsung): piezas QML compartidas.
 - `view3d/make_model.py`: genera las mallas (`view3d/meshes/<estilo>/`) con Blender, todos
   los estilos o solo el indicado:
-  `"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b -P view3d/make_model.py -- hp_smart_tank_580`
+  `"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b -P view3d/make_model.py -- hp_smart_tank_580`.
+  Cada familia está en `view3d/printers/<familia>.py` y se arma con las piezas compartidas de
+  `view3d/parts.py` (patas, ventanas de tanques, botón de encendido, almohadillas, estación de
+  servicio, ventana lateral, cartuchos, bandeja...): un modelo nuevo es casi solo medidas.
+- `visor3d.py` (o `visor.bat`): visor de los modelos sin conectar nada, con un menú para
+  elegirlos; se recarga solo cuando se regeneran las mallas o se toca un QML.
 - `view3d/make_studio.py`: genera la iluminación de estudio `view3d/studio.hdr`.

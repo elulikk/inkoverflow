@@ -48,22 +48,13 @@ Node {
         scale: Qt.vector3d(100, 100, 100)
 
         PrincipledMaterial { id: mHole; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05 }
-        PrincipledMaterial { id: mShell; baseColor: "#25282d"; roughness: 0.6; specularAmount: 0.8
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mLidShell; baseColor: "#202327"; roughness: 0.78; specularAmount: 0.6
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mGloss; baseColor: "#1c1e22"; roughness: 0.28; specularAmount: 0.95
-                             clearcoatAmount: 0.35; clearcoatRoughnessAmount: 0.25
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mHoleShell; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mInner; baseColor: "#1d2024"; roughness: 0.7; specularAmount: 0.3
-                             opacity: 1 - 0.6 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
+        ShellMaterial { id: mShell; baseColor: "#25282d"; roughness: 0.6; specularAmount: 0.8; xray: app.xray }
+        ShellMaterial { id: mLidShell; baseColor: "#202327"; roughness: 0.78; specularAmount: 0.6; xray: app.xray }
+        ShellMaterial { id: mGloss; baseColor: "#1c1e22"; roughness: 0.28; specularAmount: 0.95
+                        clearcoatAmount: 0.35; clearcoatRoughnessAmount: 0.25; xray: app.xray }
+        ShellMaterial { id: mHoleShell; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05; xray: app.xray }
+        ShellMaterial { id: mInner; baseColor: "#1d2024"; roughness: 0.7; specularAmount: 0.3
+                        seeThrough: 0.6; xray: app.xray }
         PrincipledMaterial { id: mTray; baseColor: "#2b2f34"; roughness: 0.55; specularAmount: 0.6 }
         PrincipledMaterial { id: mButton; baseColor: "#24272c"; roughness: 0.3; specularAmount: 0.7 }
         PrincipledMaterial { id: mRubber; baseColor: "#161718"; roughness: 0.95 }
@@ -256,25 +247,7 @@ Node {
     }
 
     // printed lettering (2D text placed in the scene, 1 unit = 1 mm)
-    Node {
-        position: Qt.vector3d(95, 72, 151.8)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: "EPSON"
-            color: "#d3d7dc"
-            font.family: "Arial"; font.pixelSize: 125; font.weight: Font.Bold
-            font.letterSpacing: 5
-            x: -width / 2; y: -height / 2
-        }
-    }
-    Node {
-        position: Qt.vector3d(140, 58, 151.8)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: "Wi-Fi"
-            color: "#8f969e"
-            font.family: app.colors.family; font.pixelSize: 48; font.weight: Font.DemiBold
-            x: -width / 2; y: -height / 2
-        }
-    }
+    BrandLogo { brand: "epson"; position: Qt.vector3d(95, 72, 151.8); size: 12.5; color: "#d3d7dc" }
+    Label3D { text: "Wi-Fi"; position: Qt.vector3d(140, 58, 151.8); size: 4.8
+              family: app.colors.family; color: "#8f969e" }
 }

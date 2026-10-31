@@ -34,19 +34,11 @@ Node {
 
         PrincipledMaterial { id: mHole; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05 }
         // the shell over the mechanism: see-through while the printer works (app.xray)
-        PrincipledMaterial { id: mShell; baseColor: "#25282d"; roughness: 0.62; specularAmount: 0.8
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mLidShell; baseColor: "#202327"; roughness: 0.8; specularAmount: 0.6
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mGloss; baseColor: "#1c1e22"; roughness: 0.3; specularAmount: 0.9
-                             clearcoatAmount: 0.35; clearcoatRoughnessAmount: 0.25
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mHoleShell; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
+        ShellMaterial { id: mShell; baseColor: "#25282d"; roughness: 0.62; specularAmount: 0.8; xray: app.xray }
+        ShellMaterial { id: mLidShell; baseColor: "#202327"; roughness: 0.8; specularAmount: 0.6; xray: app.xray }
+        ShellMaterial { id: mGloss; baseColor: "#1c1e22"; roughness: 0.3; specularAmount: 0.9
+                        clearcoatAmount: 0.35; clearcoatRoughnessAmount: 0.25; xray: app.xray }
+        ShellMaterial { id: mHoleShell; baseColor: "#040405"; roughness: 1.0; specularAmount: 0.05; xray: app.xray }
         PrincipledMaterial { id: mTray; baseColor: "#2d3136"; roughness: 0.55; specularAmount: 0.6 }
         PrincipledMaterial { id: mButton; baseColor: "#2c2f35"; roughness: 0.35 }
         PrincipledMaterial { id: mRubber; baseColor: "#161718"; roughness: 0.95 }
@@ -155,38 +147,12 @@ Node {
     }
 
     // printed lettering (2D text placed in the scene, 1 unit = 1 mm)
-    Node {
-        position: Qt.vector3d(-25, 80, 142.2)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: "EPSON"
-            color: "#9fa5ad"
-            font.family: "Arial"; font.pixelSize: 150; font.weight: Font.Bold
-            font.letterSpacing: 6
-            x: -width / 2; y: -height / 2
-        }
-    }
-    Node {
-        position: Qt.vector3d(153.75, 105, 144.2)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: app.d.model || "L3150"
-            color: "#8f969e"
-            font.family: app.colors.family; font.pixelSize: 90; font.weight: Font.DemiBold
-            x: -width / 2; y: -height / 2
-        }
-    }
+    BrandLogo { brand: "epson"; position: Qt.vector3d(-25, 80, 142.2); size: 15; color: "#9fa5ad" }
+    Label3D { text: app.d.model || "L3150"; position: Qt.vector3d(153.75, 105, 144.2); size: 9
+              family: app.colors.family; color: "#8f969e" }
     Repeater3D {
         model: style.tankOrder
-        Node {
-            position: Qt.vector3d(130.95 + index * 15.2, 7.0, 144.2)
-            scale: Qt.vector3d(0.1, 0.1, 0.1)
-            Text {
-                text: modelData
-                color: "#7d858e"
-                font.family: app.colors.family; font.pixelSize: 55; font.weight: Font.Bold
-                x: -width / 2; y: -height / 2
-            }
-        }
+        Label3D { text: modelData; position: Qt.vector3d(130.95 + index * 15.2, 7.0, 144.2)
+                  size: 5.5; weight: Font.Bold; family: app.colors.family; color: "#7d858e" }
     }
 }

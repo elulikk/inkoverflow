@@ -31,34 +31,16 @@ Node {
         id: printer
         scale: Qt.vector3d(100, 100, 100)
 
-        PrincipledMaterial { id: mBody; baseColor: "#eef0f2"; roughness: 0.42; specularAmount: 0.45
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mTop; baseColor: "#33373c"; roughness: 0.55; specularAmount: 0.45
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mLid; baseColor: "#4f545a"; roughness: 0.62; specularAmount: 0.4
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mPlate; baseColor: "#eceef0"; roughness: 0.3; specularAmount: 0.6
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mTabs; baseColor: "#c9cdd1"; roughness: 0.4
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mNotch; baseColor: "#a9aeb3"; roughness: 0.5
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mLogo; baseColor: "#8c9298"; roughness: 0.32; specularAmount: 0.7
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
+        ShellMaterial { id: mBody; baseColor: "#eef0f2"; roughness: 0.42; specularAmount: 0.45; xray: app.xray }
+        ShellMaterial { id: mTop; baseColor: "#33373c"; roughness: 0.55; specularAmount: 0.45; xray: app.xray }
+        ShellMaterial { id: mLid; baseColor: "#4f545a"; roughness: 0.62; specularAmount: 0.4; xray: app.xray }
+        ShellMaterial { id: mPlate; baseColor: "#eceef0"; roughness: 0.3; specularAmount: 0.6; xray: app.xray }
+        ShellMaterial { id: mTabs; baseColor: "#c9cdd1"; roughness: 0.4; xray: app.xray }
+        ShellMaterial { id: mNotch; baseColor: "#a9aeb3"; roughness: 0.5; xray: app.xray }
+        ShellMaterial { id: mLogo; baseColor: "#8c9298"; roughness: 0.32; specularAmount: 0.7; xray: app.xray }
         PrincipledMaterial { id: mHole; baseColor: "#0c0d0f"; roughness: 1.0; specularAmount: 0.05 }
-        PrincipledMaterial { id: mHoleShell; baseColor: "#0c0d0f"; roughness: 1.0; specularAmount: 0.05
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
-        PrincipledMaterial { id: mInner; baseColor: "#646a71"; roughness: 0.6; specularAmount: 0.35
-                             opacity: 1 - 0.74 * app.xray
-                             alphaMode: app.xray > 0.01 ? PrincipledMaterial.Blend : PrincipledMaterial.Default }
+        ShellMaterial { id: mHoleShell; baseColor: "#0c0d0f"; roughness: 1.0; specularAmount: 0.05; xray: app.xray }
+        ShellMaterial { id: mInner; baseColor: "#646a71"; roughness: 0.6; specularAmount: 0.35; xray: app.xray }
         PrincipledMaterial { id: mTray; baseColor: "#c4c8cc"; roughness: 0.4; specularAmount: 0.5 }
         PrincipledMaterial { id: mButton; baseColor: "#41464c"; roughness: 0.35 }
         PrincipledMaterial { id: mRubber; baseColor: "#0a0a0a"; roughness: 0.95 }
@@ -184,37 +166,13 @@ Node {
     }
 
     // printed lettering (2D text placed in the scene, 1 unit = 1 mm)
-    Node {   // round logo: the disc is a mesh, the letters are text
-        position: Qt.vector3d(7.3, 110, 181.9)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: "hp"
-            color: "#f4f6f8"
-            font.family: "Segoe UI"; font.pixelSize: 210; font.weight: Font.Bold; font.italic: true
-            x: -width / 2; y: -height / 2 - 12
-        }
-    }
-    Node {
-        position: Qt.vector3d(171.5, 21.5, 182.0)
-        scale: Qt.vector3d(0.1, 0.1, 0.1)
-        Text {
-            text: "HP Smart Tank 580"
-            color: "#2f3439"
-            font.family: app.colors.family; font.pixelSize: 72; font.weight: Font.DemiBold
-            x: -width / 2; y: -height / 2
-        }
-    }
+    // round logo: the disc is a mesh, the letters are text
+    BrandLogo { brand: "hp"; position: Qt.vector3d(7.3, 110, 181.9); size: 21; color: "#f4f6f8" }
+    Label3D { text: "HP Smart Tank 580"; position: Qt.vector3d(171.5, 21.5, 182.0); size: 7.2
+              family: app.colors.family; color: "#2f3439" }
     Repeater3D {
         model: ["K", "C", "M", "Y"]
-        Node {
-            position: Qt.vector3d(style.tankX[index] * 100, 55.5, 182.0)
-            scale: Qt.vector3d(0.1, 0.1, 0.1)
-            Text {
-                text: modelData
-                color: "#5d646b"
-                font.family: app.colors.family; font.pixelSize: 62; font.weight: Font.Bold
-                x: -width / 2; y: -height / 2
-            }
-        }
+        Label3D { text: modelData; position: Qt.vector3d(style.tankX[index] * 100, 55.5, 182.0)
+                  size: 6.2; weight: Font.Bold; family: app.colors.family; color: "#5d646b" }
     }
 }

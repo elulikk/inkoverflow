@@ -32,10 +32,9 @@ Item {
     // info always on screen, or only while the cursor is on that part
     readonly property bool pinned: hasBridge ? bridge.pinned : true
     // printer style: which model is drawn (default the Epson L3150 family)
-    readonly property var styleFiles: ({ "epson_l3150": "EpsonL3150.qml",
-                                         "hp_smart_tank_580": "HpSmartTank580.qml",
-                                         "hp_smart_tank_210": "HpSmartTank210.qml",
-                                         "epson_xp2100": "EpsonXP2100.qml" })
+    // (the list is printer3d.MODELS; without a bridge only the Epson)
+    readonly property var styleFiles: hasBridge ? bridge.styleFiles
+                                                : ({ "epson_l3150": "EpsonL3150.qml" })
     readonly property string style: styleFiles[d.style] !== undefined ? d.style : "epson_l3150"
     // 2D sprites instead of the 3D scene, and the 30 FPS cap (both remembered by the bridge)
     readonly property bool flat: hasBridge ? bridge.mode2d : false
@@ -48,6 +47,11 @@ Item {
     readonly property bool cartridges: !!(model3d && model3d.cartridges)
     readonly property string inkPart: model3d && model3d.inkPart ? model3d.inkPart : "Tanques"
     readonly property string cartridgeCode: model3d && model3d.cartridgeCode ? model3d.cartridgeCode : ""
+    // a laser (the style says so): toner instead of ink, and no waste pads
+    readonly property bool laser: !!(model3d && model3d.laser)
+    readonly property string inkTitle: laser ? "TÓNER" + (cartridgeCode ? " " + cartridgeCode : "")
+                                       : cartridges ? "CARTUCHOS" + (cartridgeCode ? " " + cartridgeCode : "")
+                                       : "TINTA"
     // cartridges at 15 % or less, as "Negro (206), Cian (206)"; "" when none
     readonly property string lowCartridges: {
         if (!cartridges) return ""
@@ -613,8 +617,7 @@ Item {
     component InkContent: Column {
         id: ic
         spacing: 10
-        Caption { text: root.cartridges ? "CARTUCHOS" + (root.cartridgeCode ? " " + root.cartridgeCode : "")
-                                        : "TINTA" }
+        Caption { text: root.inkTitle }
         Row {
             spacing: 10
             Repeater {
@@ -651,16 +654,23 @@ Item {
             text: !root.cartridges
                   ? (d.inkMeasured ? "" : "La impresora no mide los tanques: mirá el visor de cada uno.")
                   : !root.connected ? ""
-                  : !d.inkMeasured ? "La impresora no informó el nivel de los cartuchos: pulsá Actualizar."
+                  : !d.inkMeasured ? (root.laser ? "La impresora no informó el nivel del tóner: pulsá Actualizar."
+                                                 : "La impresora no informó el nivel de los cartuchos: pulsá Actualizar.")
                   : root.lowCartridges !== ""
                     ? "Por agotarse: " + root.lowCartridges + ". Tené a mano el repuesto: "
-                      + "la impresora se detiene cuando uno se vacía."
+                      + (root.laser ? "con poco tóner la impresión sale pálida."
+                                    : "la impresora se detiene cuando uno se vacía.")
+                  : root.laser ? "Nivel estimado por el chip del tóner."
                   : "Nivel estimado por el chip de cada cartucho" + (root.cartridgeCode ? " Epson " + root.cartridgeCode : "") + "."
         }
         HudButton {
             visible: root.cartridges
             width: ic.width
-            text: root.shot === "tanks" ? "Cerrar el escáner" : "Levantar el escáner y ver los cartuchos"
+            // a style may word it for its own cover (`openText`, `closeText`)
+            text: root.shot === "tanks"
+                  ? (root.model3d && root.model3d.closeText ? root.model3d.closeText : "Cerrar el escáner")
+                  : (root.model3d && root.model3d.openText ? root.model3d.openText
+                                                            : "Levantar el escáner y ver los cartuchos")
             onClicked: root.preset(root.shot === "tanks" ? "front" : "tanks")
         }
         Rectangle { width: ic.width; height: 1; color: pal.line; visible: (d.stats || []).length > 0 }
@@ -773,7 +783,7 @@ Item {
         readonly property bool showLine: root.pinned || open
         // a card stays readable even when its spot turns away from the camera
         opacity: open ? 1 : Math.max(0, Math.min(1, (facing - 0.08) * 3.5))
-        visible: opacity > 0.01
+        visible: opacity > 0.01 && !!spot
 
         Shape {
             anchors.fill: parent
@@ -865,7 +875,7 @@ Item {
         }
         Callout {
             part: "tanks"
-            title: root.cartridges ? "CARTUCHOS" + (root.cartridgeCode ? " " + root.cartridgeCode : "") : "TINTA"
+            title: root.inkTitle
             value: d.inkMeasured ? root.inks.map(function (k) { return k.level < 0 ? "--" : k.level }).join(" · ")
                                  : root.cartridges ? "--" : "Visor"
             sub: root.lowCartridges !== "" ? "por agotarse: " + root.lowCartridges
@@ -978,6 +988,7 @@ Item {
         anchors.margins: 16
         spacing: 12
         Panel {
+            visible: !root.laser
             width: 300
             height: padsFixed.implicitHeight + 32
             PadsContent { id: padsFixed; x: 16; y: 16; width: parent.width - 32 }
@@ -1010,7 +1021,8 @@ Item {
             spacing: 6
             HudButton { text: "Frente"; checked: root.shot === "front"; onClicked: root.preset("front") }
             HudButton { text: root.inkPart; checked: root.shot === "tanks"; onClicked: root.preset("tanks") }
-            HudButton { text: "Almohadillas"; checked: root.shot === "pads"; onClicked: root.preset("pads") }
+            HudButton { text: "Almohadillas"; checked: root.shot === "pads"; visible: !root.laser
+                        onClicked: root.preset("pads") }
             HudButton { text: "Panel"; checked: root.shot === "panel"; onClicked: root.preset("panel") }
             Rectangle { width: 1; height: 26; color: pal.line; anchors.verticalCenter: parent.verticalCenter }
             HudButton { text: root.spin ? "Giro: sí" : "Giro: no"; checked: root.spin; visible: !root.flat
@@ -1029,8 +1041,12 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 72
-        text: (root.pinned ? "" : "Pasa el cursor por la impresora, " + (root.cartridges ? "el escáner (cartuchos)" : "los tanques")
-                                  + " o las almohadillas · ")
+        // a cartridge style may say where its cartridges are reached (`cartridgeSpot`)
+        text: (root.pinned ? "" : "Pasa el cursor por la impresora, "
+                                  + (!root.cartridges ? "los tanques"
+                                     : root.model3d && root.model3d.cartridgeSpot ? root.model3d.cartridgeSpot
+                                     : "el escáner (cartuchos)")
+                                  + (root.laser ? " · " : " o las almohadillas · "))
               + (root.flat ? "Arrastra para mover" : "Arrastra para girar")
               + " · rueda para acercar · clic en una pieza para enfocarla"
         color: pal.muted; opacity: 0.8

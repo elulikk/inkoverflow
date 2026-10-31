@@ -20,11 +20,31 @@ import prefs
 HERE = Path(__file__).resolve().parent
 QML = HERE / "view3d" / "Printer3D.qml"
 
-# 3D models (data["style"]): view3d/<QML file> with its meshes in view3d/meshes/<style>/.
-# An unknown or missing style draws the Epson.
-STYLES = {"epson_l3150": "EpsonL3150.qml", "hp_smart_tank_580": "HpSmartTank580.qml",
-          "hp_smart_tank_210": "HpSmartTank210.qml",
-          "epson_xp2100": "EpsonXP2100.qml"}
+# 3D models (data["style"]): style -> (view3d/<QML file>, name, brand, ink), meshes in
+# view3d/meshes/<style>/ (built by view3d/make_model.py). The one list of them: the scene
+# (Bridge.styleFiles), the 2D view and the model viewer (visor3d.py) read it from here.
+# `ink` is "tanks", "cartridges" or "toner". An unknown or missing style draws the Epson.
+MODELS = {
+    "epson_l3150": ("EpsonL3150.qml", "Epson L3150", "epson", "tanks"),
+    "epson_xp2100": ("EpsonXP2100.qml", "Epson XP-2100", "epson", "cartridges"),
+    "hp_smart_tank_580": ("HpSmartTank580.qml", "HP Smart Tank 580", "hp", "tanks"),
+    "hp_smart_tank_210": ("HpSmartTank210.qml", "HP Smart Tank 210", "hp", "tanks"),
+    "hp_ink_tank_415": ("HpInkTank415.qml", "HP Ink Tank 415", "hp", "tanks"),
+    "hp_deskjet_2775": ("HpDeskJet2775.qml", "HP DeskJet Ink Advantage 2775", "hp",
+                        "cartridges"),
+    "canon_g3110": ("CanonG3110.qml", "Canon PIXMA G3110", "canon", "tanks"),
+    "brother_t420w": ("BrotherT420W.qml", "Brother DCP-T420W", "brother", "tanks"),
+    # mono lasers: one family file each for the printer and its multifunction
+    "hp_laserjet_m111": ("HpLaserJet.qml", "HP LaserJet M111w", "hp", "toner"),
+    "hp_laserjet_m141": ("HpLaserJet.qml", "HP LaserJet MFP M141w", "hp", "toner"),
+    "brother_hl1212w": ("BrotherLaser.qml", "Brother HL-1212W", "brother", "toner"),
+    "brother_dcp1612w": ("BrotherLaser.qml", "Brother DCP-1612W", "brother", "toner"),
+    "pantum_p2500w": ("PantumLaser.qml", "Pantum P2500W", "pantum", "toner"),
+    "pantum_m6550nw": ("PantumLaser.qml", "Pantum M6550NW", "pantum", "toner"),
+    "samsung_m2020w": ("SamsungLaser.qml", "Samsung Xpress M2020W", "samsung", "toner"),
+    "samsung_m2070w": ("SamsungLaser.qml", "Samsung Xpress M2070W", "samsung", "toner"),
+}
+STYLES = {style: model[0] for style, model in MODELS.items()}
 
 # L3150 family: what the tanks show before (or without) a reading
 DEFAULT_INKS = [("Negro", "#1d1d1f"), ("Cian", "#00a3e0"), ("Magenta", "#d6007e"),
@@ -149,6 +169,10 @@ class Bridge(QObject):
     def _fps_seconds(self):
         return FPS_SECONDS
 
+    def _style_files(self):
+        return dict(STYLES)
+
+    styleFiles = Property("QVariantMap", _style_files, constant=True)
     minFps = Property(int, _min_fps, constant=True)
     fpsSeconds = Property(int, _fps_seconds, constant=True)
 
@@ -288,6 +312,16 @@ class Printer3DPage(QWidget):
     def enable_3d(self, guard=True):
         prefs.save(view3d_off=None)
         self.bridge.fpsGuard = guard
+        self.view = None
+        if self.isVisible():
+            self._create()
+            self._set_active(True)
+
+    def reload(self):
+        """Build the view again from its files (QML and meshes just rebuilt)."""
+        if self.view:
+            self._stack.removeWidget(self.view)
+            self.view.deleteLater()
         self.view = None
         if self.isVisible():
             self._create()

@@ -78,6 +78,46 @@ class Names(unittest.TestCase):
             self.assertFalse(hp_models.is_smart_tank_210_family(model), model)
         self.assertEqual(hp_models.style_for("hp", "HP Smart Tank 530"), "hp_smart_tank_580")
 
+    def test_ink_tank_and_deskjet_2700_get_their_own_models(self):
+        for model in ("HP Ink Tank 310", "HP Ink Tank 315", "HP Ink Tank Wireless 410",
+                      "HP Ink Tank Wireless 415", "HP Ink Tank 419"):
+            self.assertEqual(hp_models.style_for("hp", model), "hp_ink_tank_415", model)
+        for model in ("HP DeskJet 2700", "HP DeskJet 2720", "HP DeskJet Ink Advantage 2775",
+                      "HP DeskJet Ink Advantage 2776"):
+            self.assertEqual(hp_models.style_for("hp", model), "hp_deskjet_2775", model)
+        for model in ("HP Ink Tank 3100", "HP DeskJet 3700", "HP DeskJet 27000",
+                      "HP Smart Tank 530"):
+            self.assertEqual(hp_models.style_for("hp", model), "hp_smart_tank_580", model)
+
+    def test_canon_and_brother_get_their_models(self):
+        self.assertEqual(hp_models.style_for("canon", "G3110"), "canon_g3110")
+        self.assertEqual(hp_models.style_for("brother", "DCP-T420W"), "brother_t420w")
+
+    def test_lasers_get_the_printer_or_the_multifunction(self):
+        cases = [("hp", "HP LaserJet M111w", "hp_laserjet_m111"),
+                 ("hp", "HP LaserJet M110we", "hp_laserjet_m111"),
+                 ("hp", "HP LaserJet MFP M141w", "hp_laserjet_m141"),
+                 ("hp", "HP LaserJet Pro M15w", "hp_laserjet_m111"),
+                 ("hp", "HP LaserJet M1132 MFP", "hp_laserjet_m141"),
+                 ("brother", "HL-1212W", "brother_hl1212w"),
+                 ("brother", "DCP-1612W", "brother_dcp1612w"),
+                 ("pantum", "P2500W", "pantum_p2500w"),
+                 ("pantum", "M6550NW", "pantum_m6550nw"),
+                 ("samsung", "Xpress M2020W", "samsung_m2020w"),
+                 ("samsung", "Xpress M2070W", "samsung_m2070w")]
+        for brand, model, style in cases:
+            self.assertEqual(hp_models.style_for(brand, model), style, model)
+        self.assertEqual(hp_models.style_for("hp", "HP Smart Tank 530"), "hp_smart_tank_580")
+
+    def test_every_style_has_its_files(self):
+        import printer3d
+        styles = {getattr(hp_models, name) for name in dir(hp_models)
+                  if name.startswith("STYLE_")}
+        self.assertTrue(styles <= set(printer3d.MODELS), styles - set(printer3d.MODELS))
+        for style, (qml, *_rest) in printer3d.MODELS.items():
+            self.assertTrue((printer3d.HERE / "view3d" / qml).is_file(), qml)
+            self.assertTrue((printer3d.HERE / "view3d" / "meshes" / style).is_dir(), style)
+
     def test_xp2100_family_gets_the_cartridge_model(self):
         for model in ("XP-2100", "XP-2101", "XP-2105", "XP-2150", "XP-2155"):
             self.assertEqual(hp_models.style_for("epson", model), "epson_xp2100", model)
